@@ -1,5 +1,6 @@
 package com.ysahin.spring.boot.service.impl;
 
+import com.ysahin.spring.boot.dto.EmployeeDto;
 import com.ysahin.spring.boot.entity.ApiS;
 import com.ysahin.spring.boot.service.ApiService;
 import com.ysahin.spring.boot.service.KafkaService;
@@ -15,7 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -39,6 +44,7 @@ public class KafkaServiceImpl implements KafkaService {
 
     private String topicName = "apiLogs";
     private List<String> logList;
+    private List<ApiS> employeeCreatedTimeList;
     private String recordList;
     private ApiS apiS;
 
@@ -58,6 +64,9 @@ public class KafkaServiceImpl implements KafkaService {
 
     @Override
     public void listenMessageConsumer(){
+        LocalDateTime instance = LocalDateTime.now();
+        LocalDateTime instance2 = instance.minusHours(1);
+        employeeCreatedTimeList = apiService.apiCreatedDate(instance2);
         Properties configPro = new Properties();
         configPro.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,configServer);
         configPro.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,keyDeserializer);
@@ -75,7 +84,8 @@ public class KafkaServiceImpl implements KafkaService {
                     recordList = record.value();
                 }
             logList = Arrays.asList(recordList.split(","));
-            apiService.saveApiS(logList.get(0),logList.get(1),logList.get(2));
+            apiService.saveApiS(logList.get(0),logList.get(1),logList.get(2),instance);
+            System.out.println(employeeCreatedTimeList.get(0).getTimestamp());
         }
         catch (Exception e){
             System.out.println(e);
